@@ -1,0 +1,152 @@
+﻿<!DOCTYPE HTML5>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>LodossWarOnline</title>
+
+<script src="static/script/jquery.min.js" type="text/javascript"></script>
+<script src="static/script/jquery.easyui.min.js" type="text/javascript"></script>
+<script src="static/script/jquery.json.js" type="text/javascript"></script>
+<script src="static/script/wgui.js" type="text/javascript"></script>
+
+<link rel="stylesheet" type="text/css" href="static/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="static/themes/icon.css">
+
+
+
+
+</head>
+<!--1. 在整个页面创建布局面板-->
+<body>
+    <div class="easyui-layout"  data-options="fit:true">
+        
+    <div data-options="region:'east',split:true" style="width:300px;padding:10px">
+        
+            
+                <input class="easyui-textbox" id="logtxt" data-options="fit:true,multiline:true" value="" >
+            
+        </div>
+
+
+        <div data-options="region:'center'" style="padding:10px">
+            <div class="easyui-accordion" data-options="fit:true" style="padding:10px;" >
+                            <div title="基本设置" data-options="" style="width:100% ;height:500px;padding:10px;" >
+                                    <div class="easyui-panel" title="挂所在路径"  style="width:100% ;height:100px;padding:10px;">
+                                        <input id="txt_gamePath" class="easyui-textbox" data-options="onClickButton:function(){onChangeGamePath();},buttonText:'确定',prompt:'输入挂的LoadDllx64.exe位置...'" style="width:100%;height:24px;">
+                                    </div>
+
+                                    <div class="easyui-panel"  title="登陆间隔时间(秒)"  style="width:100% ;height:100px;padding:20px;">
+                                        <input class="easyui-slider" id="slider_IntervalTime" data-options="fit:true,
+                                        showTip:true,min:10,max:100,value:30,
+                                        rule: [10,'|',40,'|',70,'|',100],
+                                        onComplete:onChangeLoginTimeComplete" >
+                                    </div>
+                            </div>
+
+                            <div title="帐号设置" data-options=""  style="padding:10px;">
+                                <div width:100% >
+                                    <p style="color:#0099FF" >上传帐号会清除上次上传记录,所以每次都需要上传所有帐号</p>
+                                </div>
+
+                                <div  class="easyui-panel" title="帐号上传" style="width:220;height:400px;padding:5px;">
+                                    <div style="margin-bottom:10px">
+                                        <input class="easyui-textbox" id="textbox_uids" style="width:100%;height:300px;" data-options="multiline:true,prompt:'帐号列表,格式为: 帐号,密码' ">
+                                    </div>
+                                     <div style="padding:5px 0px;">
+                                        <a href="#" class="easyui-linkbutton" onclick="uploadAccounts()" data-options="" style="width:80px">提交</a>
+                                    </div>
+                                </div>
+
+                                     <!--下面的隐藏控件不能去,一去掉在chrome上有时显示会异常-->
+                                    <div style= "visibility:hidden">
+                                     <form id="account" action="/account" enctype="multipart/form-data" method="post">
+                                                        <input type="file" name="file" class="file" id="fileField"  />
+                                                        <input type="submit" value="上传"></input>
+
+                                                        <script type="text/javascript">
+                                                            $('#account').form({
+                                                                    success:function(data){
+                                                                        log(data)
+                                                                        $.messager.alert("", data, "info")
+                                                                    }
+                                                            });
+                                                        </script>
+                                                    </form>
+                                    </div>
+                                </div>
+                            
+
+
+                            <!--~~~~~~~~~~~~~~~~~~~~~帐号状态~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+                            <div title="帐号状态" data-options="" style="width:100%;height:100px;padding:10px;" >
+                                    <div class="easyui-panel" style="width:100%;">
+                                        <a href="#" class="easyui-linkbutton" data-options="plain:true">控制</a>
+                                        <a href="#" class="easyui-menubutton" data-options="menu:'#mm1'">帐号操作</a>
+                                        <a href="#" class="easyui-menubutton" data-options="menu:'#mm2'">挂机模式</a>
+                                        <a href="#" class="easyui-menubutton" data-options="menu:'#mm3'">关于</a>
+                                    </div>
+                                    <div id="mm1" style="width:150px;">
+                                        <div data-options=""  onclick ="accountContorl('loginIDList',0)" >上线</div>
+                                        <div class="menu-sep"></div>
+                                        <div data-options=""  onclick ="accountContorl('logOutIDList',0)" >下线</div>
+                                        <div class="menu-sep"></div>
+                                    </div>
+                                    <div id="mm2" style="width:100px;">
+                                        <div onclick ="accountContorl('workMode',1)" >正常模式</div>
+                                        <div onclick ="accountContorl('workMode',2)" >模式1</div>
+                                        <div onclick ="accountContorl('workMode',3)" >模式2</div>
+                                        <div onclick ="accountContorl('workMode',4)" >模式3</div>
+                                        <div onclick ="accountContorl('workMode',5)" >模式4</div>
+                                        <div onclick ="accountContorl('workMode',6)" >发呆模式</div>
+                                    </div>
+                                    <div id="mm3" class="menu-content" style="background:#f0f0f0;padding:10px;text-align:left">
+                                        <p style="font-size:14px;color:#444">Lodoss 挂机管理器v1.01  <br>  2015年7月8日 20:17:51  </p>
+                                    </div>
+                                
+                                <table id="dg_account" class="easyui-datagrid" title="" style="width:100%;"  data-options="
+                                                rownumbers:true,
+                                                singleSelect:false,
+                                                autoRowHeight:false,
+                                                pagination:true,
+                                                
+                                                checkOnSelect:false,
+                                                pageList:[5,10,20,30,50],
+                                                onClickRow:function(index,row){   $('#dg_account').datagrid('unselectAll') ; },
+                                                pageSize:10">
+                                        <thead>
+                                            <tr>
+                                                <th data-options="field:'ck',checkbox:true"></th>
+                                                <th field="uid" width="80px">帐号</th>
+                                                <th field="pid" width="60px">进程</th>
+                                                <th field="name" width="80px">角色名</th>
+                                                <th field="lv" width="40px" >等级</th>
+                                                <th field="money" width="70px">金币</th>
+                                                <th field="note" width="800px">状态</th>
+                                            </tr>
+                                        </thead>
+                                </table>
+                            </div>
+                            <!--~~~~~~~~~~~~~~~~~~~~~帐号状态~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+
+                            <div title="其它设置" data-options="" style="padding:10px;">
+                                    暂时还没想到有什么需要设置的...想到了再加
+                            </div>
+
+                            <div title="使用教程" data-options="" style="padding:10px;">
+                                <p style="color:#0099FF" >
+                                1.打开 LoadDllx64.exe  Exe填写游戏所在的位置,dir填游戏所在目录<br>
+                                  Dll填写挂 Core.dll位置  参数填写 121.156.124.30 0 1 然后关闭<br>
+                                2.网页上点基本设置,设置里需要设置的东西<br>
+                                3.点帐号设置,上传你的帐号,注意格式 utf-8格式保存
+                                4.点击帐号状态,这里你可以选中帐号,然后在帐号操作上选上线 下线 等操作<br>
+                                </p>
+                            </div>
+            </div>
+        </div>  <!-- center -->
+
+    </div>
+</body>
+
+
+</html>
